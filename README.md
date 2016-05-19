@@ -28,5 +28,5 @@ CREATE TABLE users (
   user_name                 VARCHAR(64)   NOT NULL
 );
 
--- todo: add timestamp for registration and last login
+-- todo: add timestamp for registration and last login, maybe active logins table?
 ```
