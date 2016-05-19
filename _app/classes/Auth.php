@@ -9,7 +9,7 @@ class Auth {
     // Properties.
     // ------------------------------------------------------------------------
 
-    private static $privateKey     = "";
+    private static $privateKey = "";
     private static $privateKeyLock = false;
 
     // ------------------------------------------------------------------------
@@ -33,6 +33,15 @@ class Auth {
     }
 
     public function doPasswordReset($email, $key, $password, $password) {
+    }
+
+    public function updateEmail($email) {
+    }
+
+    public function updateName($name) {
+    }
+
+    public function updatePassword($password_old, $password_new, $password_new_again) {
     }
 
     public function isLoggedIn() {
@@ -107,7 +116,9 @@ class Auth {
      * @throws Exception
      */
     public static function setPrivateKey($privateKey) {
-        if (self::$privateKeyLock) throw new Exception("You cannot set private key after creating instance.");
+        if (self::$privateKeyLock) {
+            throw new Exception("You cannot set private key after creating instance.");
+        }
         self::$privateKey = $privateKey;
     }
 }

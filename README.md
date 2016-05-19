@@ -21,6 +21,7 @@ CREATE TABLE users (
   user_email                VARCHAR(128)  NOT NULL UNIQUE,
   user_password_hash        VARCHAR(128)  NOT NULL,
   user_password_salt        VARCHAR(128)  NOT NULL,
+  user_created_at           TIMESTAMP     NOT NULL DEFAULT now(),
   user_is_actived           BOOLEAN       NOT NULL DEFAULT FALSE,
   user_activation_hash      VARCHAR(128)  NOT NULL,
   user_failed_login_counter INTEGER       NOT NULL DEFAULT 0,
@@ -28,5 +29,8 @@ CREATE TABLE users (
   user_name                 VARCHAR(64)   NOT NULL
 );
 
--- todo: add timestamp for registration and last login, maybe active logins table?
+-- todo: add timestamp for last login, maybe active logins table?
 ```
+
+Čo tak urobiť tabuľku user_logins pre aktívne prihlásenia užívateľov?
+Čo tak urobiť tabuľku user_meta pre meno, a iné fičúry? Napr. posledné prihlásenie užívateľa, user-agent...
