@@ -10,3 +10,23 @@ Hodnotit budu kód (JavaScript i PHP) a funkčnost (zda vše funguje jak má, je
 Maximum je sto bodů.
 
 K JavaScriptu můžete použít čistou jQuery.
+
+### Štruktúra databázy
+
+Používam MySQL databázu.
+
+```sql
+CREATE TABLE users (
+  user_id                   SERIAL        PRIMARY KEY,
+  user_email                VARCHAR(128)  NOT NULL UNIQUE,
+  user_password_hash        VARCHAR(128)  NOT NULL,
+  user_password_salt        VARCHAR(128)  NOT NULL,
+  user_is_actived           BOOLEAN       NOT NULL DEFAULT FALSE,
+  user_activation_hash      VARCHAR(128)  NOT NULL,
+  user_failed_login_counter INTEGER       NOT NULL DEFAULT 0,
+  user_last_failed_login    TIMESTAMP              DEFAULT NULL,
+  user_name                 VARCHAR(64)   NOT NULL
+);
+
+-- todo: add timestamp for registration and last login
+```
