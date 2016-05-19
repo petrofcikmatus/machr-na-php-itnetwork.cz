@@ -28,6 +28,9 @@ $db_credentials = array(
 // predanie nastavenia databázy do databázového wrapperu, ľahšie sa nám bude pracovať.
 Database::setCredentials($db_credentials);
 
+// pridanie súkromného kľúča pre túto aplikáciu. Každá apka by mala mať iný :)
+Auth::setPrivateKey("hlkôajsdkf3215dfa&#asdf");
+
 // routy našej aplikácie a ich zodpovedajúci php súbor
 $routes = array(
     ""               => "index",
