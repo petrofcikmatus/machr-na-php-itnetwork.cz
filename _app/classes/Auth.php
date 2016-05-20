@@ -29,10 +29,13 @@ class Auth {
     public function doRegistration($email, $password, $password_again, $name = "Unknown user") {
     }
 
-    public function doActivation($email, $key) {
+    public function useActivationKey($email, $key) {
     }
 
-    public function doPasswordReset($email, $key, $password, $password) {
+    public function sendRecoveryKey($email) {
+    }
+
+    public function useRecoveryKey($email, $key, $password, $password) {
     }
 
     public function updateEmail($email) {
@@ -74,12 +77,12 @@ class Auth {
     }
 
     /**
-     * Vráti náhodne vygenerovaný 32-znakový aktivačný kľúč.
+     * Vráti náhodne vygenerovaný 6-znakový aktivačný kľúč.
      * Metóda sa môže meniť aj po nasadení do produkcie.
      * @return string
      */
     private function getActivationKey() {
-        return hash("md5", mt_rand() . time());
+        return substr(strtoupper(hash("sha1", mt_rand() . time())), 0, 6);
     }
 
     /**
