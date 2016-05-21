@@ -78,7 +78,7 @@ function show_page($view) {
 // zobrazí stránku 404
 function show_404() {
     header("HTTP/1.0 404 Not Found");
-    if (!file_exists($file = APP_PATH . "/_app/pages/error/404.php")) {
+    if (!file_exists($file = APP_PATH . "/_app/pages/error/error-404.php")) {
         exit("Page file ${file} not found (and page also not found).");
     }
 

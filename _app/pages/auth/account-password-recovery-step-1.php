@@ -29,7 +29,7 @@ add_layout("header", array("title" => "Obnova hesla - zaslanie obnovovacieho kľ
 
         <div class="row">
             <div class="col-lg-12">
-                <form class="form-horizontal">
+                <form class="form-horizontal" method="post">
                     <div class="form-group">
                         <label for="inputEmail" class="col-lg-2 control-label">Email</label>
                         <div class="col-lg-10">
