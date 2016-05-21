@@ -20,7 +20,7 @@ require "_app/classes/AuthModel.php";
 $db_credentials = array(
     "host" => "localhost",
     "port" => 3310,
-    "name" => "test",
+    "name" => "machr",
     "user" => "root",
     "pass" => "root"
 );

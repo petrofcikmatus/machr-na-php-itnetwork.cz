@@ -10,14 +10,15 @@ class AuthModel {
     // ------------------------------------------------------------------------
 
     private static $privateKey = "";
-    private static $privateKeyLock = false;
+    private static $tokenName  = "auth_token";
+    private static $classLock  = false;
 
     // ------------------------------------------------------------------------
     // Public methods.
     // ------------------------------------------------------------------------
 
     public function __construct() {
-        self::$privateKeyLock = true;
+        self::$classLock = true;
     }
 
     public function doLogin($email, $password) {
@@ -41,13 +42,20 @@ class AuthModel {
     public function updateEmail($email) {
     }
 
-    public function updateName($name) {
-    }
-
     public function updatePassword($password_old, $password_new, $password_new_again) {
     }
 
     public function isLoggedIn() {
+        if (!$this->hasLoginToken()) false;
+
+        $token = $this->getLoginToken();
+        $query = "COUNT * FROM active_logins WHERE active_login_token = :token";
+
+        if (Database::getInstance()->queryOne($query, array("token" => $token)) == 0) {
+            $this->removeLoginToken();
+            return false;
+        }
+
         return true;
     }
 
@@ -55,9 +63,6 @@ class AuthModel {
     }
 
     public function isValidEmail($email) {
-    }
-
-    public function isValidName($name) {
     }
 
     public function isValidPassword($password) {
@@ -73,8 +78,8 @@ class AuthModel {
      * Metóda sa môže meniť aj po nasadení do produkcie.
      * @return string
      */
-    private function getPasswordSalt() {
-        return hash("sha512", mt_rand() . time());
+    private function getNewPasswordSalt() {
+        return hash("sha512", mt_rand() . time() . uniqid());
     }
 
     /**
@@ -82,8 +87,17 @@ class AuthModel {
      * Metóda sa môže meniť aj po nasadení do produkcie.
      * @return string
      */
-    private function getActivationKey() {
-        return substr(strtoupper(hash("sha1", mt_rand() . time())), 0, 6);
+    private function getNewActivationKey() {
+        return substr(strtoupper(hash("sha1", mt_rand() . time() . uniqid())), 0, 6);
+    }
+
+    /**
+     * Vráti náhodne vygenerovaný 128-znakový prihlasovací token.
+     * Metóda sa môže meniť aj po nasadení do produkcie.
+     * @return string
+     */
+    private function getNewLoginToken() {
+        return hash("sha512", mt_rand() . time() . uniqid());
     }
 
     /**
@@ -107,6 +121,36 @@ class AuthModel {
         return hash("sha512", $password . $salt . self::$privateKey);
     }
 
+    /**
+     * @return bool
+     */
+    private function hasLoginToken() {
+        return isset($_COOKIE[self::$tokenName]);
+    }
+
+    /**
+     * @param null $default
+     * @return null
+     */
+    private function getLoginToken($default = null) {
+        return $this->hasLoginToken() ? $_COOKIE[self::$tokenName] : $default;
+    }
+
+    /**
+     * @param string $token
+     * @return bool
+     */
+    private function setLoginToken($token) {
+        return setcookie(self::$tokenName, $token, strtotime("+30 days"));
+    }
+
+    /**
+     * @return bool
+     */
+    private function removeLoginToken() {
+        return setcookie(self::$tokenName, null, 1);
+    }
+
     // ------------------------------------------------------------------------
     // Private static methods.
     // ------------------------------------------------------------------------
@@ -120,9 +164,21 @@ class AuthModel {
      * @throws Exception
      */
     public static function setPrivateKey($privateKey) {
-        if (self::$privateKeyLock) {
+        if (self::$classLock) {
             throw new Exception("You cannot set private key after creating instance.");
         }
         self::$privateKey = $privateKey;
+    }
+
+    /**
+     * Nastavuje názov tokenu v $_COOKIE poli.
+     * @param string $tokenName
+     * @throws Exception
+     */
+    public static function setTokenName($tokenName) {
+        if (self::$classLock) {
+            throw new Exception("You cannot set token name after creating instance.");
+        }
+        self::$tokenName = $tokenName;
     }
 }
