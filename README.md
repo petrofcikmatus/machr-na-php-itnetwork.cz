@@ -1,21 +1,13 @@
-# Machr na PHP - Registrace, přihlašování
+# Machr na PHP - Registrácia a prihlasovanie
 
 **Link:** http://www.itnetwork.cz/php/diskuzni-forum-php-webtvorba/machr-na-php-registrace-prihlasovani-573df6ca3c869
-
-### Zadanie
-
-Vaším úkolem v této soutěži bude vytvořit jednoduchou stránku a přidat na ní registrační formulář. Po registraci bude třeba účet aktivovat pomocí odkazu zaslaného na email. K tomu přidáte možnost přihlášení pro zaregistrované (a aktivované) účty + možnost obnovení hesla pomocí emailu.
-Během vyplňování registračního formuláře budete pomocí JavaScriptu kontrolovat platnost vyplňovaných údajů (jako např. jak je dlouhé heslo, zda se shoduje s potvrzením hesla, jestli uživatel nezadal místo emailu nějaký nesmysl...)
-Hodnotit budu kód (JavaScript i PHP) a funkčnost (zda vše funguje jak má, jestli stránka nevyhodí nějakou chybu) - a to půl na půl.
-Maximum je sto bodů.
-
-K JavaScriptu můžete použít čistou jQuery.
 
 ### Štruktúra databázy
 
 Používam MySQL databázu.
 
 ```sql
+/* Tabuľka užívateľov. */
 CREATE TABLE users (
   user_id                   SERIAL        PRIMARY KEY,
   user_email                VARCHAR(128)  NOT NULL UNIQUE,
@@ -23,14 +15,24 @@ CREATE TABLE users (
   user_password_salt        VARCHAR(128)  NOT NULL,
   user_created_at           TIMESTAMP     NOT NULL DEFAULT now(),
   user_is_actived           BOOLEAN       NOT NULL DEFAULT FALSE,
-  user_activation_hash      VARCHAR(128)  NOT NULL,
-  user_failed_login_counter INTEGER       NOT NULL DEFAULT 0,
-  user_last_failed_login    TIMESTAMP              DEFAULT NULL,
-  user_name                 VARCHAR(64)   NOT NULL
+  user_activation_hash      VARCHAR(128)  NOT NULL
+  -- todo: pridať napríklad údaje ako meno užívateľa a podobne
 );
 
--- todo: add timestamp for last login, maybe active logins table?
-```
+/* Tabuľka aktívnych prihlásení. */
+CREATE TABLE active_logins (
+  active_login_id         SERIAL           PRIMARY KEY,
+  active_login_user_id    INTEGER UNSIGNED NOT NULL REFERENCES users(user_id),
+  active_login_token      VARCHAR(128)     NOT NULL UNIQUE,
+  active_login_created_at TIMESTAMP        NOT NULL DEFAULT now()
+  -- todo: pridať napríklad údaje o prehliadači, posledná IP a podobne
+);
 
-Čo tak urobiť tabuľku user_logins pre aktívne prihlásenia užívateľov?
-Čo tak urobiť tabuľku user_meta pre meno, a iné fičúry? Napr. posledné prihlásenie užívateľa, user-agent...
+/* Tabuľka chybných prihlásení. Cieľom je hlavne zabrániť silovému útoku na hádanie hesiel. */
+CREATE TABLE failed_logins (
+  failed_login_id         SERIAL           PRIMARY KEY,
+  failed_login_user_id    INTEGER UNSIGNED NOT NULL REFERENCES users(user_id),
+  failed_login_created_at TIMESTAMP        NOT NULL DEFAULT now()
+  -- todo: tabuľka sa pri úspešnom prihlásení vymaže, ale do budúcna sa môže použiť aj inak
+);
+```
