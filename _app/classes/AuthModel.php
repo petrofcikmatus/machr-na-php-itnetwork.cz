@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Class Auth
+ * Class AuthModel
  */
-class Auth {
+class AuthModel {
 
     // ------------------------------------------------------------------------
     // Properties.
@@ -48,6 +48,7 @@ class Auth {
     }
 
     public function isLoggedIn() {
+        return true;
     }
 
     public function isFreeEmail($email) {

@@ -14,7 +14,7 @@ require "_app/includes/functions.php";
 
 // potrebné triedy na prácu s databázou a s autentifikáciou užívateľov
 require "_app/classes/Database.php";
-require "_app/classes/Auth.php";
+require "_app/classes/AuthModel.php";
 
 // nastavenia pripojenia na databázu, nech si každý nastaví podľa seba ;)
 $db_credentials = array(
@@ -29,7 +29,7 @@ $db_credentials = array(
 Database::setCredentials($db_credentials);
 
 // pridanie súkromného kľúča pre túto aplikáciu. Každá apka by mala mať iný :)
-Auth::setPrivateKey("hlkôajsdkf3215dfa&#asdf");
+AuthModel::setPrivateKey("hlkôajsdkf3215dfa&#asdf");
 
 // routy našej aplikácie a ich zodpovedajúci php súbor
 $routes = array(
@@ -38,7 +38,8 @@ $routes = array(
     "odhlasenie"     => "auth/account-logout",
     "registracia"    => "auth/account-registration",
     "aktivacia-uctu" => "auth/account-activation",
-    "obnova-hesla"   => "auth/account-password-recovery"
+    "obnova-hesla"   => "auth/account-password-recovery",
+    "moj-ucet"       => "auth/account-details"
 );
 
 // vyberieme si prvý segment našej url adresy
