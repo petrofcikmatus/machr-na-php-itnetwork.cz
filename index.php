@@ -33,13 +33,14 @@ AuthModel::setPrivateKey("hlkôajsdkf3215dfa&#asdf");
 
 // routy našej aplikácie a ich zodpovedajúci php súbor
 $routes = array(
-    ""               => "index",
-    "prihlasenie"    => "auth/account-login",
-    "odhlasenie"     => "auth/account-logout",
-    "registracia"    => "auth/account-registration",
-    "aktivacia-uctu" => "auth/account-activation",
-    "obnova-hesla"   => "auth/account-password-recovery",
-    "moj-ucet"       => "auth/account-details"
+    ""                    => "index",
+    "prihlasenie"         => "auth/account-login",
+    "odhlasenie"          => "auth/account-logout",
+    "registracia"         => "auth/account-registration",
+    "aktivacia-uctu"      => "auth/account-activation",
+    "obnova-hesla"        => "auth/account-password-recovery-step-1",
+    "obnova-hesla-krok-2" => "auth/account-password-recovery-step-2",
+    "moj-ucet"            => "auth/account-details"
 );
 
 // vyberieme si prvý segment našej url adresy

@@ -21,24 +21,27 @@
 
         <div class="collapse navbar-collapse" id="navbar">
             <ul class="nav navbar-nav">
-                <li<?php if (segment(1) == "prihlasenie") echo " class=\"active\"" ?>><a href="<?= url("prihlasenie") ?>">Prihlásenie</a></li>
-                <li<?php if (segment(1) == "registracia") echo " class=\"active\"" ?>><a href="<?= url("registracia") ?>">Registrácia</a></li>
-                <li<?php if (segment(1) == "obnova-hesla") echo " class=\"active\"" ?>><a href="<?= url("obnova-hesla") ?>">Obnova hesla</a></li>
-                <li<?php if (segment(1) == "aktivacia-uctu") echo " class=\"active\"" ?>><a href="<?= url("aktivacia-uctu") ?>">Aktivácia účtu</a></li>
-                <li<?php if (segment(1) == "moj-ucet") echo " class=\"active\"" ?>><a href="<?= url("moj-ucet") ?>">Môj účet</a></li>
-                <li<?php if (segment(1) == "odhlasenie") echo " class=\"active\"" ?>><a href="<?= url("odhlasenie") ?>">Odhlásenie</a></li>
+                <?php if (true) { ?>
+                    <li><a href="<?= url("prihlasenie") ?>">Prihlásenie</a></li>
+                    <li><a href="<?= url("registracia") ?>">Registrácia</a></li>
+                    <li><a href="<?= url("obnova-hesla") ?>">Obnova hesla</a></li>
+                    <li><a href="<?= url("aktivacia-uctu") ?>">Aktivácia účtu</a></li>
+                <?php } else { ?>
+                    <li><a href="<?= url("moj-ucet") ?>">Môj účet</a></li>
+                    <li><a href="<?= url("odhlasenie") ?>">Odhlásenie</a></li>
+                <?php } ?>
             </ul>
         </div>
     </div>
 </nav>
 
-<?php if (has_messages()) : ?>
+<?php if (has_messages()) { ?>
     <div class="container">
-        <?php foreach (get_messages() as $message) : ?>
+        <?php foreach (get_messages() as $message) { ?>
             <div class="alert alert-dismissible alert-info">
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
                 <?= plain($message) ?>
             </div>
-        <?php endforeach ?>
+        <?php } ?>
     </div>
-<?php endif ?>
+<?php } ?>
