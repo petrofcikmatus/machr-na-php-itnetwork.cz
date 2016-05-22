@@ -19,7 +19,7 @@ require "_app/classes/AuthModel.php";
 // nastavenia pripojenia na databázu, nech si každý nastaví podľa seba ;)
 $db_credentials = array(
     "host" => "localhost",
-    "port" => 3310,
+    "port" => 3306,
     "name" => "machr",
     "user" => "root",
     "pass" => "root"

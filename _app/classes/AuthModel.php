@@ -46,10 +46,10 @@ class AuthModel {
     }
 
     public function isLoggedIn() {
-        if (!$this->hasLoginToken()) false;
+        if (!$this->hasLoginToken()) return false;
 
         $token = $this->getLoginToken();
-        $query = "COUNT * FROM active_logins WHERE active_login_token = :token";
+        $query = "SELECT COUNT(*) FROM active_logins WHERE active_login_token = :token";
 
         if (Database::getInstance()->queryOne($query, array("token" => $token)) == 0) {
             $this->removeLoginToken();

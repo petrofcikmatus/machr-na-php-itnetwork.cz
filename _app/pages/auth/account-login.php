@@ -34,13 +34,13 @@ add_layout("header", array("title" => "Prihlásenie"));
                     <div class="form-group">
                         <label for="inputEmail" class="col-lg-2 control-label">Email</label>
                         <div class="col-lg-10">
-                            <input class="form-control" id="inputEmail" placeholder="Email" type="text" value="<?= plain($email) ?>">
+                            <input class="form-control" id="inputEmail" placeholder="Email" type="text" name="email" value="<?= plain($email) ?>">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="inputPassword" class="col-lg-2 control-label">Heslo</label>
                         <div class="col-lg-10">
-                            <input class="form-control" id="inputPassword" placeholder="Heslo" type="password" value="">
+                            <input class="form-control" id="inputPassword" placeholder="Heslo" type="password" name="password" value="">
                         </div>
                     </div>
                     <div class="form-group">
