@@ -1,5 +1,9 @@
 <?php
 
+$am = new AuthModel();
+
+if (!$am->isLoggedIn()) redirect("prihlasenie");
+
 $email = isset($_POST["email"]) ? $_POST["email"] : "";
 
 add_layout("header", array("title" => "Môj účet"));

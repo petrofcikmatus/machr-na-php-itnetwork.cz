@@ -2,7 +2,7 @@
 
 $am = new AuthModel();
 
-//if ($am->isLoggedIn()) redirect("moj-profil");
+if ($am->isLoggedIn()) redirect();
 
 $email         = isset($_POST["email"]) ? $_POST["email"] : "";
 $password      = isset($_POST["password"]) ? $_POST["password"] : "";
