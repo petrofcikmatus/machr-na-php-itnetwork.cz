@@ -30,7 +30,7 @@ Database::setCredentials($db_credentials);
 
 // pridanie tajnej soli pre heslo a pre token. Každá apka by mala mať iný, zvýši sa bezpečnosť :)
 AuthModel::setSecretPasswordSalt("hlkôajsdkf3215dfa&#asdf");
-AuthModel::setSecretTokenSalt("lôaksdjfôlkajsdlfôkasdf");
+AuthModel::setSecretTokenSalt("lôaksdjfôldkajsdlfôkasdf");
 
 // routy našej aplikácie a ich zodpovedajúci php súbor
 $routes = array(

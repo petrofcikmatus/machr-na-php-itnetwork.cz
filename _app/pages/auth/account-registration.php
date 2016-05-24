@@ -12,7 +12,7 @@ if (is_post_request()) {
     try {
         $am->doRegistration($email, $password, $passwordAgain);
         add_message("Registrácia prebehla úspešne.");
-        redirect("prihlasenie?email=" . $email);
+        redirect("aktivacia-uctu?email=" . $email);
     } catch (Exception $e) {
         add_message($e->getMessage());
     }
