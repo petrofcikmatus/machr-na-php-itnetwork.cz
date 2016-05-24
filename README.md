@@ -15,7 +15,7 @@ CREATE TABLE users (
   user_password_salt        VARCHAR(128)  NOT NULL,
   user_created_at           TIMESTAMP     NOT NULL DEFAULT now(),
   user_is_actived           BOOLEAN       NOT NULL DEFAULT FALSE,
-  user_activation_hash      VARCHAR(128)  NOT NULL
+  user_activation_key_hash  VARCHAR(128)  NOT NULL
   -- todo: pridať napríklad údaje ako meno užívateľa a podobne
 );
 

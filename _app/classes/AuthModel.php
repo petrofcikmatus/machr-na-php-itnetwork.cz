@@ -199,42 +199,39 @@ class AuthModel {
         return setcookie(self::$tokenCookieName, null, 1);
     }
 
-    /*
-    private function getUserIdByToken() {
-        if (!$this->isLoggedIn()) return null;
-
-        $query = "SELECT active_login_user_id FROM active_logins WHERE active_login_token = :token";
-        $param = array(
-            "token" => $this->getLoginToken()
-        );
-
-        return $this->db->queryOne($query, $param);
+    private function addActiveLogin($user_id, $token_hash) {
+        return $this->db->query("INSERT INTO active_logins (active_login_user_id, active_login_token_hash) VALUES (:user_id, :token_hash)", array("user_id" => $user_id, "token_hash" => $token_hash));
     }
 
-    private function getDataById($user_id) {
-        $query = "
-            SELECT u.user_id, 
-                   u.user_email, 
-                   u.user_password_salt, 
-                   u.user_password_hash , 
-                   u.user_is_actived, 
-                   u.user_created_at
-            FROM users u 
-            LEFT JOIN active_logins al ON (u.user_id = al.active_login_user_id)
-            LEFT JOIN failed_logins fl ON (u.user_id = fl.failed_login_user_id)
-            WHERE u.user_id = :user_id
-        ";
-        $param = array("user_id" => $user_id);
-
-        return $this->db->queryRow($query, $param);
+    private function removeActiveLogin($token_hash) {
+        return $this->db->query("DELETE FROM active_logins WHERE active_login_token_hash = :token_hash", array("token_hash" => $token_hash));
     }
 
-    private function getDataByToken($active_login_token) {
-        $query = "";
-        $param = array("active_login_token" => $active_login_token);
+    private function addFailedLogin($user_id) {
+        return $this->db->query("INSERT INTO failed_logins (failed_login_user_id) VALUES (:user_id)", array("user_id" => $user_id));
+    }
 
-        return $this->db->queryRow($query, $param);
-    } */
+    private function clearFailedLogins($user_id) {
+        return $this->db->query("DELETE FROM failed_logins WHERE failed_login_user_id = :user_id", array("user_id" => $user_id));
+    }
+
+    private function getFailedLoginsCount($user_id) {
+        return $this->db->queryOne("SELECT COUNT(*) FROM failed_logins WHERE failed_login_user_id = :id", array("id" => $user_id));
+    }
+
+    private function getLastFailedLoginTimestamp($user_id) {
+        return $this->db->queryOne("SELECT failed_login_created_at FROM failed_logins WHERE failed_login_user_id = :id ORDER BY failed_login_id DESC LIMIT 1", array("id" => $user_id));
+    }
+
+    private function getUserByEmail($user_email) {
+        return $this->db->queryRow("SELECT user_id, user_is_actived, user_password_salt, user_password_hash FROM users WHERE user_email = :user_email", array("user_email" => $user_email));
+    }
+
+    private function getUserByToken($token) {
+        $token_hash = $this->getLoginTokenHash($token);
+
+
+    }
 
     // ------------------------------------------------------------------------
     // Public methods.
@@ -253,6 +250,7 @@ class AuthModel {
     }
 
     /**
+     * Vráti true, ak je užívateľ prihlásený, inak false.
      * @return bool
      */
     public function isLoggedIn() {
@@ -265,28 +263,33 @@ class AuthModel {
             $this->removeLoginToken();
             return false;
         }
-
         return true;
     }
 
+    /**
+     * Prihlási užívateľa pomocou emailu a hesla, inak vyhodí výnimku.
+     * @param string $email
+     * @param string $password
+     * @throws Exception
+     */
     public function doLogin($email, $password) {
 
         if (!$this->isValidEmail($email)) {
-            throw new Exception("Prihlasovací email má nesprávny tvar.");
+            throw new Exception("Zadaný email nemá správny tvar.");
         }
 
         if (!$this->isValidPassword($password)) {
-            throw new Exception("Prihlasovacie heslo má nesprávny tvar.");
+            throw new Exception("Zadané heslo nemá správny tvar.");
         }
 
-        $user = $this->db->queryRow("SELECT user_id, user_is_actived, user_password_salt, user_password_hash FROM users WHERE user_email = :email", array("email" => $email));
+        $user = $this->getUserByEmail($email);
 
         if (empty($user) || !isset($user->user_id)) {
             throw new Exception("Účet neexistuje.");
         }
 
         if (false == $user->user_is_actived) {
-            throw new Exception("Učet nebol aktivovaný.");
+            throw new Exception("Učet nie je aktivovaný.");
         }
 
         $failed_logins_count = $this->getFailedLoginsCount($user->user_id);
@@ -316,33 +319,23 @@ class AuthModel {
         $this->clearFailedLogins($user->user_id);
     }
 
-    private function addFailedLogin($user_id) {
-        return $this->db->query("INSERT INTO failed_logins (failed_login_user_id) VALUES (:user_id)", array("user_id" => $user_id));
-    }
-
-    private function getFailedLoginsCount($user_id) {
-        return $this->db->queryOne("SELECT COUNT(*) FROM failed_logins WHERE failed_login_user_id = :id", array("id" => $user_id));
-    }
-
-    private function getLastFailedLoginTimestamp($user_id) {
-        return $this->db->queryOne("SELECT failed_login_created_at FROM failed_logins WHERE failed_login_user_id = :id ORDER BY failed_login_id DESC LIMIT 1", array("id" => $user_id));
-    }
-
-    private function clearFailedLogins($user_id) {
-        return $this->db->query("DELETE FROM failed_logins WHERE failed_login_user_id = :user_id", array("user_id" => $user_id));
-    }
-
-    private function addActiveLogin($user_id, $token_hash) {
-        return $this->db->query("INSERT INTO active_logins (active_login_user_id, active_login_token_hash) VALUES (:user_id, :token)", array("user_id" => $user_id, "token_hash" => $token_hash));
-    }
-
+    /**
+     * Odhlási užívateľa.
+     */
     public function doLogout() {
         $token      = $this->getLoginToken();
         $token_hash = $this->getLoginTokenHash($token);
-        $this->db->query("DELETE FROM active_logins WHERE active_login_token_hash = :token_hash LIMIT 1", array("token_hash" => $token_hash));
+        $this->removeActiveLogin($token_hash);
         $this->removeLoginToken();
     }
 
+    /**
+     * Zaregistruje nového užívateľa.
+     * @param string $email
+     * @param string $password
+     * @param string $password_again
+     * @throws Exception
+     */
     public function doRegistration($email, $password, $password_again) {
 
         if (!$this->isValidEmail($email)) {
@@ -372,20 +365,20 @@ class AuthModel {
               user_email, 
               user_password_hash, 
               user_password_salt,
-              user_activation_hash
+              user_activation_key_hash
             ) VALUES (
               :email,
               :password_hash,
               :password_salt,
-              :activation_hash
+              :activation_key_hash
             )
         ";
 
         $param = array(
-            "email"           => $email,
-            "password_hash"   => $password_hash,
-            "password_salt"   => $password_salt,
-            "activation_hash" => $activation_key_hash
+            "email"               => $email,
+            "password_hash"       => $password_hash,
+            "password_salt"       => $password_salt,
+            "activation_key_hash" => $activation_key_hash
         );
 
         try {
@@ -393,6 +386,8 @@ class AuthModel {
         } catch (Exception $e) {
             throw $e;
         }
+
+        // todo: send activation key!!
 
     }
 
