@@ -220,7 +220,7 @@ class AuthModel {
         return $this->db->query("INSERT INTO failed_logins (uid) VALUES (:uid)", array("uid" => $uid));
     }
 
-    private function clearFailedLogins($uid) {
+    private function removeFailedLogins($uid) {
         return $this->db->query("DELETE FROM failed_logins WHERE uid = :uid", array("uid" => $uid));
     }
 
@@ -228,8 +228,8 @@ class AuthModel {
         return $this->db->queryOne("SELECT COUNT(*) FROM failed_logins WHERE uid = :uid", array("uid" => $uid));
     }
 
-    private function getLastFailedLoginTimestamp($uid) {
-        return $this->db->queryOne("SELECT created_at FROM failed_logins WHERE uid = :uid ORDER BY id DESC LIMIT 1", array("uid" => $uid));
+    private function getLastFailedLogin($uid) {
+        return $this->db->queryRow("SELECT * FROM failed_logins WHERE uid = :uid ORDER BY id DESC LIMIT 1", array("uid" => $uid));
     }
 
     // User ID.
@@ -261,6 +261,18 @@ class AuthModel {
 
     private function addRecoveryKey($uid, $key) {
         return $this->db->query("INSERT INTO recovery_keys (uid, key_hash) VALUES (:uid, :key_hash)", array("uid" => $uid, "key_hash" => $this->getKeyHash($key)));
+    }
+
+    private function getRecoveryKeysCount($uid) {
+        return $this->db->queryOne("SELECT COUNT(*) FROM recovery_keys WHERE uid = :uid", array("uid" => $uid));
+    }
+
+    private function getLastRecoveryKey($uid) {
+        return $this->db->queryRow("SELECT * FROM recovery_keys WHERE uid = :uid ORDER BY id DESC LIMIT 1", array("uid" => $uid));
+    }
+
+    private function removeRecoveryKeys($uid) {
+        return $this->db->query("DELETE FROM recovery_keys WHERE uid = :uid", array("uid" => $uid));
     }
 
     // Others.
@@ -330,7 +342,9 @@ class AuthModel {
         $failed_logins_count = $this->getFailedLoginsCount($user->id);
 
         if (0 != $failed_logins_count) {
-            $dt1 = new DateTime($this->getLastFailedLoginTimestamp($user->id));
+            $last_failed_login = $this->getLastFailedLogin($user->id);
+
+            $dt1 = new DateTime($last_failed_login->created_at);
             $dt2 = new DateTime("-30 seconds");
 
             if ($failed_logins_count > 3 && $dt1 > $dt2) {
@@ -346,7 +360,7 @@ class AuthModel {
             throw new Exception("Nesprávne heslo.");
         }
 
-        $this->clearFailedLogins($user->id);
+        $this->removeFailedLogins($user->id);
 
         $token = $this->generateToken();
         $this->addActiveLogin($user->id, $token);
@@ -482,10 +496,62 @@ class AuthModel {
         add_message("Obnovovací kľúč: " . $recovery_key);
     }
 
-    public function useRecoveryKey($email, $key, $password, $password) {
-        // 04A82E
+    public function useRecoveryKey($email, $key, $password, $password_again) {
 
-        
+        if (!$this->isValidEmail($email)) {
+            throw new Exception("Zadaný email nemá správny tvar.");
+        }
+
+        $user = $this->getUserDataByEmail($email);
+
+        if (empty($user) || !isset($user->id)) {
+            throw new Exception("Účet neexistuje.");
+        }
+
+        if (!$user->is_actived) {
+            throw new Exception("Účet ešte nie je aktivovaný, nemôžete mu meniť heslo.");
+        }
+
+        $recovery_keys_count = $this->getRecoveryKeysCount($user->id);
+
+        if (0 == $recovery_keys_count) {
+            throw new Exception("Účet nemá žiaden obnovovací kľúč.");
+        }
+
+        $last_recovery_key = $this->getLastRecoveryKey($user->id);
+
+        $dt1 = new DateTime($last_recovery_key->created_at);
+        $dt2 = new DateTime("-5 minutes");
+
+        if ($last_recovery_key->key_hash != $this->getKeyHash($key) || $dt1 < $dt2) {
+            throw new Exception("Zadaný obnovovací kľúč je neplatný.");
+        }
+
+        if (!$this->isValidPassword($password)) {
+            throw new Exception("Zadané heslo musí mať minimálne 6 znakov.");
+        }
+
+        if ($password != $password_again) {
+            throw new Exception("Zadané heslá sa nezhodujú.");
+        }
+
+        $password_salt = $this->generateSalt();
+        $password_hash = $this->getPasswordHash($password, $password_salt);
+
+        $query = "UPDATE users SET password_salt = :password_salt, password_hash = :password_hash WHERE id = :id";
+        $param = array(
+            "password_hash" => $password_hash,
+            "password_salt" => $password_salt,
+            "id"            => $user->id
+        );
+
+        try {
+            $this->db->query($query, $param);
+        } catch (Exception $e) {
+            throw new Exception("Počas obnovovania hesla nastala neočakávaná chyba.", 0, $e);
+        }
+
+        $this->removeRecoveryKeys($user->id);
     }
 
     /* public function updateEmail($email) {
