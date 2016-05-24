@@ -7,32 +7,41 @@
 Používam MySQL databázu.
 
 ```sql
-/* Tabuľka užívateľov. */
+/* Tabuľka užívateľov. Do tejto tabuľky by som nedával veci ako meno, priezvisko, ... na to by slúžila tabuľka users_meta */
 CREATE TABLE users (
-  user_id                   SERIAL        PRIMARY KEY,
-  user_email                VARCHAR(128)  NOT NULL UNIQUE,
-  user_password_hash        VARCHAR(128)  NOT NULL,
-  user_password_salt        VARCHAR(128)  NOT NULL,
-  user_created_at           TIMESTAMP     NOT NULL DEFAULT now(),
-  user_is_actived           BOOLEAN       NOT NULL DEFAULT FALSE,
-  user_activation_key_hash  VARCHAR(128)  NOT NULL
-  -- todo: pridať napríklad údaje ako meno užívateľa a podobne
+  id                  SERIAL       PRIMARY KEY,
+  email               VARCHAR(128) NOT NULL UNIQUE,
+  password_hash       VARCHAR(128) NOT NULL,
+  password_salt       VARCHAR(128) NOT NULL,
+  is_actived          BOOLEAN      NOT NULL DEFAULT FALSE,
+  activation_key_hash VARCHAR(128) NOT NULL DEFAULT '',
+  created_at          TIMESTAMP    NOT NULL DEFAULT now()
+);
+
+/* Tabuľka obnovovacích kľúčov. */
+CREATE TABLE recovery_keys (
+  id         SERIAL PRIMARY KEY,
+  uid        BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+  key_hash   VARCHAR(128)    NOT NULL,
+  created_at TIMESTAMP       NOT NULL DEFAULT now()
 );
 
 /* Tabuľka aktívnych prihlásení. */
 CREATE TABLE active_logins (
-  active_login_id         SERIAL           PRIMARY KEY,
-  active_login_user_id    BIGINT UNSIGNED  NOT NULL REFERENCES users(user_id),
-  active_login_token_hash VARCHAR(128)     NOT NULL UNIQUE,
-  active_login_created_at TIMESTAMP        NOT NULL DEFAULT now()
+  id         SERIAL          PRIMARY KEY,
+  uid        BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+  token_hash VARCHAR(128)    NOT NULL UNIQUE,
+  created_at TIMESTAMP       NOT NULL DEFAULT now()
   -- todo: pridať napríklad údaje o prehliadači, posledná IP a podobne
 );
 
-/* Tabuľka chybných prihlásení. Cieľom je hlavne zabrániť silovému útoku na hádanie hesiel. */
+/* Tabuľka chybných prihlásení. Cieľom je hlavne zabrániť silovému útoku na hádanie hesiel.
+ * Tabuľka sa pri úspešnom prihlásení pre daného užívateľa vymaže, ale do budúcna sa môže použiť aj inak.
+ */
 CREATE TABLE failed_logins (
-  failed_login_id         SERIAL           PRIMARY KEY,
-  failed_login_user_id    BIGINT UNSIGNED  NOT NULL REFERENCES users(user_id),
-  failed_login_created_at TIMESTAMP        NOT NULL DEFAULT now()
-  -- todo: tabuľka sa pri úspešnom prihlásení vymaže, ale do budúcna sa môže použiť aj inak
+  id         SERIAL          PRIMARY KEY,
+  uid        BIGINT UNSIGNED NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP       NOT NULL DEFAULT now()
+  -- todo: pridať napríklad údaje o prehliadači, posledná IP a podobne
 );
 ```

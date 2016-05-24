@@ -199,11 +199,19 @@ class AuthModel {
         return setcookie(self::$tokenCookieName, null, 1);
     }
 
-    private function addActiveLogin($user_id, $token_hash) {
-        return $this->db->query("INSERT INTO active_logins (active_login_user_id, active_login_token_hash) VALUES (:user_id, :token_hash)", array("user_id" => $user_id, "token_hash" => $token_hash));
+    private function addActiveLogin($id, $token) {
+        $token_hash = $this->getLoginTokenHash($token);
+        return $this->db->query("INSERT INTO active_logins (active_login_user_id, active_login_token_hash) VALUES (:id, :token_hash)", array("id" => $id, "token_hash" => $token_hash));
     }
 
-    private function removeActiveLogin($token_hash) {
+    private function hasActiveLogin($token) {
+        $token_hash = $this->getLoginTokenHash($token);
+        $count      = $this->db->queryOne("SELECT COUNT(*) FROM active_logins WHERE active_login_token_hash = :token_hash", array("token_hash" => $token_hash));
+        return 1 == $count;
+    }
+
+    private function removeActiveLogin($token) {
+        $token_hash = $this->getLoginTokenHash($token);
         return $this->db->query("DELETE FROM active_logins WHERE active_login_token_hash = :token_hash", array("token_hash" => $token_hash));
     }
 
@@ -223,14 +231,30 @@ class AuthModel {
         return $this->db->queryOne("SELECT failed_login_created_at FROM failed_logins WHERE failed_login_user_id = :id ORDER BY failed_login_id DESC LIMIT 1", array("id" => $user_id));
     }
 
-    private function getUserByEmail($user_email) {
-        return $this->db->queryRow("SELECT user_id, user_is_actived, user_password_salt, user_password_hash FROM users WHERE user_email = :user_email", array("user_email" => $user_email));
+    private function getUserIdByEmail($email) {
+        return $this->db->queryOne("SELECT user_id FROM users WHERE user_email = :email", array("email" => $email));
     }
 
-    private function getUserByToken($token) {
+    private function getUserIdByToken($token) {
         $token_hash = $this->getLoginTokenHash($token);
+        return $this->db->queryOne("SELECT active_login_user_id FROM active_logins WHERE active_login_token_hash = :token_hash", array("token_hash" => $token_hash));
+    }
 
+    private function getUserDataById($id) {
+        return $this->db->queryRow("SELECT user_id, user_is_actived, user_password_salt, user_password_hash FROM users WHERE user_id = :id", array("id" => $id));
+    }
 
+    private function getUserDataByEmail($email) {
+        return $this->db->queryRow("SELECT user_id, user_is_actived, user_password_salt, user_password_hash FROM users WHERE user_email = :email", array("email" => $email));
+    }
+
+    private function getUserDataByToken($token) {
+        $id = $this->getUserIdByToken($token);
+        return $this->getUserDataById($id);
+    }
+
+    private function setUserActive($email) {
+        return $this->db->query("UPDATE users SET user_is_actived = TRUE, user_activation_key_hash = '' WHERE user_email = :email", array("email" => $email));
     }
 
     // ------------------------------------------------------------------------
@@ -256,10 +280,9 @@ class AuthModel {
     public function isLoggedIn() {
         if (!$this->hasLoginToken()) return false;
 
-        $token      = $this->getLoginToken();
-        $token_hash = $this->getLoginTokenHash($token);
+        $token = $this->getLoginToken();
 
-        if (0 == $this->db->queryOne("SELECT COUNT(*) FROM active_logins WHERE active_login_token_hash = :token_hash", array("token_hash" => $token_hash))) {
+        if (!$this->hasActiveLogin($token)) {
             $this->removeLoginToken();
             return false;
         }
@@ -282,7 +305,7 @@ class AuthModel {
             throw new Exception("Zadané heslo nemá správny tvar.");
         }
 
-        $user = $this->getUserByEmail($email);
+        $user = $this->getUserDataByEmail($email);
 
         if (empty($user) || !isset($user->user_id)) {
             throw new Exception("Účet neexistuje.");
@@ -311,21 +334,19 @@ class AuthModel {
             throw new Exception("Nesprávne heslo.");
         }
 
-        $token = $this->getNewLoginToken();
-        $this->setLoginToken($token);
-
-        $token_hash = $this->getLoginTokenHash($token);
-        $this->addActiveLogin($user->user_id, $token_hash);
         $this->clearFailedLogins($user->user_id);
+
+        $token = $this->getNewLoginToken();
+        $this->addActiveLogin($user->user_id, $token);
+        $this->setLoginToken($token);
     }
 
     /**
      * Odhlási užívateľa.
      */
     public function doLogout() {
-        $token      = $this->getLoginToken();
-        $token_hash = $this->getLoginTokenHash($token);
-        $this->removeActiveLogin($token_hash);
+        $token = $this->getLoginToken();
+        $this->removeActiveLogin($token);
         $this->removeLoginToken();
     }
 
@@ -384,7 +405,7 @@ class AuthModel {
         try {
             $this->db->query($query, $param);
         } catch (Exception $e) {
-            throw $e;
+            throw new Exception("Počas registrácie nastala neočakávaná chyba.", 0, $e);
         }
 
         // todo: send activation key!!
@@ -392,9 +413,36 @@ class AuthModel {
     }
 
     public function useActivationKey($email, $key) {
+
+        if (!$this->isValidEmail($email)) {
+            throw new Exception("Zadaný email nemá správny tvar.");
+        }
+
+        $user = $this->getUserDataByEmail($email);
+
+        if (empty($user) || !isset($user->user_id)){
+            throw new Exception("Účet neexistuje.");
+        }
+
+        if ($user->user_is_actived) {
+            throw new Exception("Účet je už aktivovaný.");
+        }
+
+        $activation_key_hash = $this->getActivationKeyHash($key);
+
+        if ($user->user_activation_key_hash != $activation_key_hash){
+            throw new Exception("Aktivačný kľúč nie je platný.");
+        }
+
+        try {
+            $this->setUserActive($email);
+        } catch (Exception $e) {
+            throw new Exception("Počas aktivácie nastala neočakávaná chyba.", 0, $e);
+        }
     }
 
     public function sendRecoveryKey($email) {
+
     }
 
     public function useRecoveryKey($email, $key, $password, $password) {
