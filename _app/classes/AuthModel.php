@@ -572,9 +572,19 @@ class AuthModel {
             throw new Exception("Počas registrácie nastala neočakávaná chyba.", 0, $e);
         }
 
-        // todo: send activation key!!
-        add_message("Aktivačný kľúč: " . $activation_key);
+        try {
+            $message = "<html><body>";
+            $message .= "<br />Váš aktivačný kľúč je: <b>" . $activation_key . "</b>";
+            $message .= "</html></body>";
 
+            $mailer = new SuperMail();
+            $mailer->setFrom("email@localhost")->setFromName("Localhost")->setTo($email)->setSubject("Aktivačný kľúč")->setContent($message)->send();
+        } catch (Exception $e){
+            throw new Exception("Počas posielania emailu s aktivačným kľúčom nastala neočakávaná chyba.", 0, $e);
+        }
+
+        // todo: toto by tu samozrejme nemalo byť, ale nechávam z dôvodu skúšania apky na localhoste ;)
+        add_message("Aktivačný kľúč: " . $activation_key);
     }
 
     /**
@@ -637,7 +647,18 @@ class AuthModel {
             throw new Exception("Počas vytvárania obnovovacieho kľúča nastala neočakávaná chyba.", 0, $e);
         }
 
-        // todo: send recovery key!!
+        try {
+            $message = "<html><body>";
+            $message .= "<br />Váš obnovovací kľúč je: <b>" . $recovery_key . "</b>";
+            $message .= "</html></body>";
+
+            $mailer = new SuperMail();
+            $mailer->setFrom("email@localhost")->setFromName("Localhost")->setTo($email)->setSubject("Obnovovací kľúč")->setContent($message)->send();
+        } catch (Exception $e){
+            throw new Exception("Počas posielania emailu s obnovovacím kľúčom nastala neočakávaná chyba.", 0, $e);
+        }
+
+        // todo: toto by tu samozrejme nemalo byť, ale nechávam z dôvodu skúšania apky na localhoste ;)
         add_message("Obnovovací kľúč: " . $recovery_key);
     }
 

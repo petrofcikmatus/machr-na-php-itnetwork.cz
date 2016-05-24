@@ -15,6 +15,7 @@ require "_app/includes/functions.php";
 // potrebné triedy na prácu s databázou a s autentifikáciou užívateľov
 require "_app/classes/Database.php";
 require "_app/classes/AuthModel.php";
+require "_app/classes/SuperMail.php";
 
 // nastavenia pripojenia na databázu, nech si každý nastaví podľa seba ;)
 $db_credentials = array(
