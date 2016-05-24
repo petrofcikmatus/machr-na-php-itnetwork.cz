@@ -4,6 +4,8 @@ $am = new AuthModel();
 
 if (!$am->isLoggedIn()) redirect("prihlasenie");
 
+$user = $am->getUserData();
+
 $email = isset($_POST["email"]) ? $_POST["email"] : "";
 
 add_layout("header", array("title" => "Môj účet"));
@@ -14,6 +16,40 @@ add_layout("header", array("title" => "Môj účet"));
         <div class="row">
             <div class="col-lg-12">
                 <h1 class="text-center">Môj účet</h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Informácie o účte</h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Value</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>id</td>
+                                <td><?= $user->id ?></td>
+                            </tr>
+                            <tr>
+                                <td>email</td>
+                                <td><?= $user->email ?></td>
+                            </tr>
+                            <tr>
+                                <td>created_at</td>
+                                <td><?= $user->created_at ?></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 

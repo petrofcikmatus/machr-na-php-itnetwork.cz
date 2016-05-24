@@ -70,32 +70,93 @@ class AuthModel {
     // Validators.
 
     /**
-     * Vráti true, ak je email valídny, inak false.
-     * @param string $email
-     * @return mixed
-     */
-    private function isValidEmail($email) {
-        return filter_var($email, FILTER_VALIDATE_EMAIL);
-    }
-
-    /**
-     * Vráti true, ak je heslo dostačujúce, inak false.
-     * Kontrolujeme len jeho dĺžku, veď nech si užívateľ zvolí čo chce.
-     * todo: možno by to chcelo rozšíriť o ďalšie kontroly
-     * @param string $password
-     * @return bool
-     */
-    private function isValidPassword($password) {
-        return (mb_strlen($password, "utf-8") > 5);
-    }
-
-    /**
      * Vráti true, ak je email voľný, inak false.
      * @param string $email
      * @return bool
      */
     private function isFreeEmail($email) {
-        return $this->isValidEmail($email) && 0 == $this->db->queryOne("SELECT COUNT(*) FROM users WHERE email = :email", array("email" => $email));
+        return 0 == $this->db->queryOne("SELECT COUNT(*) FROM users WHERE email = :email", array("email" => $email));
+    }
+
+    /**
+     * Vyhodí výnimku ak nastane problém.
+     * @param string $email
+     * @param bool $check_is_free
+     * @throws Exception
+     */
+    private function validateEmail($email, $check_is_free = false) {
+
+        // ak email nie je zadaný
+        if ("" == $email) {
+            throw new Exception("Nezadali ste email.");
+        }
+
+        // ak to nie je email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("Zadaný email nemá správny tvar.");
+        }
+
+        // ak chcem overiť dostupnosť emailu a nie je voľný
+        if ($check_is_free && !$this->isFreeEmail($email)) {
+            throw new Exception("Zadaný email už používa iný účet.");
+        }
+    }
+
+    /**
+     * Vyhodí výnimku ak nastane problém.
+     * @param $password
+     * @param null $password_again
+     * @throws Exception
+     */
+    private function validatePassword($password, $password_again = null) {
+
+        // ak nie je heslo zadané
+        if ("" == $password) {
+            throw new Exception("Nezadali ste heslo.");
+        }
+
+        // ak je heslo príliš krátke
+        if (mb_strlen($password, "utf-8") < 6) {
+            throw new Exception("Zadané heslo nemá minimálne 6 znakov.");
+        }
+
+        // ak máme aj kontrolné heslo
+        if (null != $password_again) {
+
+            // ak je kontrolné heslo prázdne
+            if ("" == $password_again) {
+                throw new Exception("Nezadali ste kontrolné heslo.");
+            }
+
+            // ak sa heslá nezhodujú
+            if ($password != $password_again) {
+                throw new Exception("Zadané heslá sa nezhodujú");
+            }
+        }
+    }
+
+    /**
+     * Vyhodí výnimku ak nastane problém.
+     * Todo: ja som túto funkcionalitu schválne nepoužil.
+     * @param string $name
+     * @throws Exception
+     */
+    private function validateName($name) {
+
+        // ak meno nie je zadané
+        if ("" == $name) {
+            throw new Exception("Nezadali ste heslo.");
+        }
+
+        // ak je meno príliš krátne
+        if (mb_strlen($name, "utf-8") < 3) {
+            throw new Exception("Zadané meno nemá minimálne 3 znaky.");
+        }
+
+        // ak je meno príliš dlhé
+        if (mb_strlen($name, "utf-8") > 64) {
+            throw new Exception("Zadané heslo nemá maximálne 64 znakov.");
+        }
     }
 
     // Generators.
@@ -202,42 +263,88 @@ class AuthModel {
 
     // Active logins.
 
+    /**
+     * Pridá nové aktívne prihlásenie.
+     * @param $uid
+     * @param $token
+     * @return int
+     */
     private function addActiveLogin($uid, $token) {
         return $this->db->query("INSERT INTO active_logins (uid, token_hash) VALUES (:uid, :token_hash)", array("uid" => $uid, "token_hash" => $this->getTokenHash($token)));
     }
 
+    /**
+     * Vráti true ak pre daný token existuje aktívne prihlásenie.
+     * @param $token
+     * @return bool
+     */
     private function hasActiveLogin($token) {
         return 1 == $this->db->queryOne("SELECT COUNT(*) FROM active_logins WHERE token_hash = :token_hash", array("token_hash" => $this->getTokenHash($token)));
     }
 
+    /**
+     * Vymaže dané aktívne prihlásenie.
+     * @param $token
+     * @return int
+     */
     private function removeActiveLogin($token) {
         return $this->db->query("DELETE FROM active_logins WHERE token_hash = :token_hash", array("token_hash" => $this->getTokenHash($token)));
     }
 
     // Failed logins.
 
+    /**
+     * Pridá užívateľovi chybné prihlásenie.
+     * @param $uid
+     * @return int
+     */
     private function addFailedLogin($uid) {
         return $this->db->query("INSERT INTO failed_logins (uid) VALUES (:uid)", array("uid" => $uid));
     }
 
+    /**
+     * Vymaže užívateľovi chybné prihlásenia.
+     * @param $uid
+     * @return int
+     */
     private function removeFailedLogins($uid) {
         return $this->db->query("DELETE FROM failed_logins WHERE uid = :uid", array("uid" => $uid));
     }
 
+    /**
+     * Vráti počet chybných prihlásení daného užívateľa.
+     * @param $uid
+     * @return mixed
+     */
     private function getFailedLoginsCount($uid) {
         return $this->db->queryOne("SELECT COUNT(*) FROM failed_logins WHERE uid = :uid", array("uid" => $uid));
     }
 
+    /**
+     * Vráti dáta o poslednom chybnom prihlásení.
+     * @param $uid
+     * @return mixed
+     */
     private function getLastFailedLogin($uid) {
         return $this->db->queryRow("SELECT * FROM failed_logins WHERE uid = :uid ORDER BY id DESC LIMIT 1", array("uid" => $uid));
     }
 
     // User ID.
 
+    /**
+     * Vráti ID užívateľa podľa emailu.
+     * @param $email
+     * @return mixed
+     */
     private function getUserIdByEmail($email) {
         return $this->db->queryOne("SELECT id FROM users WHERE email = :email", array("email" => $email));
     }
 
+    /**
+     * Vráti ID užívateľa podľa tokenu.
+     * @param $token
+     * @return mixed
+     */
     private function getUserIdByToken($token) {
         $token_hash = $this->getTokenHash($token);
         return $this->db->queryOne("SELECT uid FROM active_logins WHERE token_hash = :token_hash", array("token_hash" => $token_hash));
@@ -245,39 +352,80 @@ class AuthModel {
 
     // User data.
 
+    /**
+     * Vráti užívateľské dáta podľa ID.
+     * @param $id
+     * @return mixed
+     */
     private function getUserDataById($id) {
         return $this->db->queryRow("SELECT * FROM users WHERE id = :id", array("id" => $id));
     }
 
+    /**
+     * Vráti užívateľské dáta podľa emailu.
+     * @param $email
+     * @return mixed
+     */
     private function getUserDataByEmail($email) {
         return $this->db->queryRow("SELECT * FROM users WHERE email = :email", array("email" => $email));
     }
 
+    /**
+     * Vráti užívateľské dáta podľa tokenu.
+     * @param $token
+     * @return mixed
+     */
     private function getUserDataByToken($token) {
         return $this->getUserDataById($this->getUserIdByToken($token));
     }
 
     // Recovery keys.
 
+    /**
+     * Pridá nový obnovovací kľúč.
+     * @param int $uid
+     * @param int $key
+     * @return int
+     */
     private function addRecoveryKey($uid, $key) {
         return $this->db->query("INSERT INTO recovery_keys (uid, key_hash) VALUES (:uid, :key_hash)", array("uid" => $uid, "key_hash" => $this->getKeyHash($key)));
     }
 
+    /**
+     * Vráti počet dostupných obnovovacích kľúčov daného užívateľa.
+     * @param int $uid
+     * @return mixed
+     */
     private function getRecoveryKeysCount($uid) {
         return $this->db->queryOne("SELECT COUNT(*) FROM recovery_keys WHERE uid = :uid", array("uid" => $uid));
     }
 
+    /**
+     * Vráti posledný záznam o obnovovacom kľúči daného užívateľa.
+     * @param int $uid
+     * @return mixed
+     */
     private function getLastRecoveryKey($uid) {
         return $this->db->queryRow("SELECT * FROM recovery_keys WHERE uid = :uid ORDER BY id DESC LIMIT 1", array("uid" => $uid));
     }
 
+    /**
+     * Vymaže obnovovacie kľúče daného užívateľa.
+     * @param int $uid
+     * @return int
+     */
     private function removeRecoveryKeys($uid) {
         return $this->db->query("DELETE FROM recovery_keys WHERE uid = :uid", array("uid" => $uid));
     }
 
     // Others.
 
-    private function setUserActive($id) {
+    /**
+     * Aktivuje danému užívateľovi účet a vymaže hash aktivačného kľúča (už ho nebude potrebovať).
+     * @param $id
+     * @return int
+     */
+    private function setUserActived($id) {
         return $this->db->query("UPDATE users SET is_actived = TRUE, activation_key_hash = '' WHERE id = :id", array("id" => $id));
     }
 
@@ -287,12 +435,19 @@ class AuthModel {
 
     /**
      * AuthModel konštruktor.
+     * Môj databázový wrapper môžeme pridať pomocou DI alebo sa pridá staticky sám.
+     * @param Database $database
+     * @throws Exception
      */
-    public function __construct() {
-        try {
-            $this->db = Database::getInstance();
-        } catch (Exception $e) {
-            throw new Exception("Nastal problém s databázou.");
+    public function __construct(Database $database = null) {
+        if (null == $database) {
+            try {
+                $this->db = Database::getInstance();
+            } catch (Exception $e) {
+                throw new Exception("Nastal problém s databázou.", 0, $e);
+            }
+        } else {
+            $this->db = $database;
         }
         self::$classLock = true;
     }
@@ -314,20 +469,15 @@ class AuthModel {
     }
 
     /**
-     * Prihlási užívateľa pomocou emailu a hesla, inak vyhodí výnimku.
+     * Prihlásenie užívateľa pomocou emailu a hesla, inak vyhodí výnimku.
      * @param string $email
      * @param string $password
      * @throws Exception
      */
     public function doLogin($email, $password) {
 
-        if (!$this->isValidEmail($email)) {
-            throw new Exception("Zadaný email nemá správny tvar.");
-        }
-
-        if (!$this->isValidPassword($password)) {
-            throw new Exception("Zadané heslo nemá správny tvar.");
-        }
+        $this->validateEmail($email);
+        $this->validatePassword($password);
 
         $user = $this->getUserDataByEmail($email);
 
@@ -368,7 +518,7 @@ class AuthModel {
     }
 
     /**
-     * Odhlási užívateľa.
+     * Odhlásenie užívateľa.
      */
     public function doLogout() {
         $token = $this->getLoginToken();
@@ -377,7 +527,7 @@ class AuthModel {
     }
 
     /**
-     * Zaregistruje nového užívateľa.
+     * Zaregistrovanie nového užívateľa.
      * @param string $email
      * @param string $password
      * @param string $password_again
@@ -385,21 +535,9 @@ class AuthModel {
      */
     public function doRegistration($email, $password, $password_again) {
 
-        if (!$this->isValidEmail($email)) {
-            throw new Exception("Zadaný email nemá správny tvar.");
-        }
+        $this->validateEmail($email, true);
 
-        if (!$this->isFreeEmail($email)) {
-            throw new Exception("Zadaný email už používa iný účet.");
-        }
-
-        if (!$this->isValidPassword($password)) {
-            throw new Exception("Zadané heslo musí mať minimálne 6 znakov.");
-        }
-
-        if ($password != $password_again) {
-            throw new Exception("Zadané heslá sa nezhodujú.");
-        }
+        $this->validatePassword($password, $password_again);
 
         $password_salt = $this->generateSalt();
         $password_hash = $this->getPasswordHash($password, $password_salt);
@@ -439,11 +577,15 @@ class AuthModel {
 
     }
 
+    /**
+     * Použitie aktivačného kľúča.
+     * @param string $email
+     * @param string $key
+     * @throws Exception
+     */
     public function useActivationKey($email, $key) {
 
-        if (!$this->isValidEmail($email)) {
-            throw new Exception("Zadaný email nemá správny tvar.");
-        }
+        $this->validateEmail($email);
 
         $user = $this->getUserDataByEmail($email);
 
@@ -462,17 +604,20 @@ class AuthModel {
         }
 
         try {
-            $this->setUserActive($user->id);
+            $this->setUserActived($user->id);
         } catch (Exception $e) {
             throw new Exception("Počas aktivácie účtu nastala neočakávaná chyba.", 0, $e);
         }
     }
 
+    /**
+     * Zaslanie obnovovacieho kľúča.
+     * @param string $email
+     * @throws Exception
+     */
     public function sendRecoveryKey($email) {
 
-        if (!$this->isValidEmail($email)) {
-            throw new Exception("Zadaný email nemá správny tvar.");
-        }
+        $this->validateEmail($email);
 
         $user = $this->getUserDataByEmail($email);
 
@@ -496,11 +641,17 @@ class AuthModel {
         add_message("Obnovovací kľúč: " . $recovery_key);
     }
 
+    /**
+     * Použitie obnovovacieho kľúča.
+     * @param string $email
+     * @param string $key
+     * @param string $password
+     * @param string $password_again
+     * @throws Exception
+     */
     public function useRecoveryKey($email, $key, $password, $password_again) {
 
-        if (!$this->isValidEmail($email)) {
-            throw new Exception("Zadaný email nemá správny tvar.");
-        }
+        $this->validateEmail($email);
 
         $user = $this->getUserDataByEmail($email);
 
@@ -527,13 +678,7 @@ class AuthModel {
             throw new Exception("Zadaný obnovovací kľúč je neplatný.");
         }
 
-        if (!$this->isValidPassword($password)) {
-            throw new Exception("Zadané heslo musí mať minimálne 6 znakov.");
-        }
-
-        if ($password != $password_again) {
-            throw new Exception("Zadané heslá sa nezhodujú.");
-        }
+        $this->validatePassword($password, $password_again);
 
         $password_salt = $this->generateSalt();
         $password_hash = $this->getPasswordHash($password, $password_salt);
@@ -554,30 +699,52 @@ class AuthModel {
         $this->removeRecoveryKeys($user->id);
     }
 
-    /* public function updateEmail($email) {
-
-        if (!$this->isValidEmail($email)) {
-            throw new Exception("Zadaný email nemá správny tvar.");
-        }
-
-        if (!$this->isFreeEmail($email)) {
-            throw new Exception("Zadaný email už používa iný účet.");
-        }
-
-        $query = "UPDATE users SET user_email = :email WHERE user_id = :id";
-        $param = array(
-            "email" => $email,
-            "id"    => $this->getUserIdByToken()
-        );
-
+    /**
+     * Zmena emailu prihlásenému užívateľovi.
+     * @param $email
+     * @throws Exception
+     */
+    public function updateEmail($email) {
+        $this->validateEmail($email, true);
+        $id = $this->getUserIdByToken($this->getLoginToken());
         try {
-            $this->db->query($query, $param);
+            $this->db->query("UPDATE users SET email = :email WHERE id = :id", array("email" => $email, "id" => $id));
         } catch (Exception $e) {
-            throw new Exception("Zmena emailu zlyhala.");
+            throw new Exception("Počas zmeny emailu nastala neočakávaná chyba.", 0, $e);
         }
-    } */
-
-    public function updatePassword($password_old, $password_new, $password_new_again) {
     }
 
+    /**
+     * Zmena hesla prihlásenému užívateľovi.
+     * @param $password_old
+     * @param $password_new
+     * @param $password_new_again
+     * @throws Exception
+     */
+    public function updatePassword($password_old, $password_new, $password_new_again) {
+        $this->validatePassword($password_old);
+        $this->validatePassword($password_new, $password_new_again);
+
+        // todo: update password
+    }
+
+    /**
+     * Vráti dáta o užívateľovi, buď o prihlásenom alebo podľa ID.
+     * Todo: toto by som dal niekam inam, do triedy ktorá sa stará o detaily a tak. Podľa mňa to sem nepatrí.
+     * @param null|int $uid
+     * @return mixed
+     */
+    public function getUserData($uid = null) {
+        if (null == $uid) {
+            $user = $this->getUserDataByToken($this->getLoginToken());
+        } else {
+            $user = $this->getUserDataById($uid);
+        }
+
+        $dt = new DateTime($user->created_at);
+
+        $user->created_at = $dt->format("d.m.Y H:i:s");
+
+        return $user;
+    }
 }
