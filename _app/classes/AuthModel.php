@@ -15,7 +15,8 @@ class AuthModel {
     private static $secretTokenSalt = "";
     private static $tokenCookieName = "auth_token";
 
-    private $db = null;
+    /** @var Database */
+    private $db;
 
     // ------------------------------------------------------------------------
     // Public static methods.
@@ -104,7 +105,7 @@ class AuthModel {
 
     /**
      * Vyhodí výnimku ak nastane problém.
-     * @param $password
+     * @param string $password
      * @param null $password_again
      * @throws Exception
      */
@@ -132,6 +133,18 @@ class AuthModel {
             if ($password != $password_again) {
                 throw new Exception("Zadané heslá sa nezhodujú");
             }
+        }
+    }
+
+    /**
+     * Vyhodí výnimku ak nastane problém.
+     * @param string $key
+     * @throws Exception
+     */
+    private function validateKey($key) {
+        // ak kľúč nie je zadaný
+        if ("" == $key) {
+            throw new Exception("Nezadali ste kľúč.");
         }
     }
 
@@ -237,11 +250,10 @@ class AuthModel {
 
     /**
      * Vráti prihlasovací token.
-     * @param null $default
      * @return null
      */
-    private function getLoginToken($default = null) {
-        return $this->hasLoginToken() ? $_COOKIE[self::$tokenCookieName] : $default;
+    private function getLoginToken() {
+        return $this->hasLoginToken() ? $_COOKIE[self::$tokenCookieName] : null;
     }
 
     /**
@@ -265,8 +277,8 @@ class AuthModel {
 
     /**
      * Pridá nové aktívne prihlásenie.
-     * @param $uid
-     * @param $token
+     * @param int $uid
+     * @param string $token
      * @return int
      */
     private function addActiveLogin($uid, $token) {
@@ -275,7 +287,7 @@ class AuthModel {
 
     /**
      * Vráti true ak pre daný token existuje aktívne prihlásenie.
-     * @param $token
+     * @param string $token
      * @return bool
      */
     private function hasActiveLogin($token) {
@@ -284,7 +296,7 @@ class AuthModel {
 
     /**
      * Vymaže dané aktívne prihlásenie.
-     * @param $token
+     * @param string $token
      * @return int
      */
     private function removeActiveLogin($token) {
@@ -295,7 +307,7 @@ class AuthModel {
 
     /**
      * Pridá užívateľovi chybné prihlásenie.
-     * @param $uid
+     * @param int $uid
      * @return int
      */
     private function addFailedLogin($uid) {
@@ -304,7 +316,7 @@ class AuthModel {
 
     /**
      * Vymaže užívateľovi chybné prihlásenia.
-     * @param $uid
+     * @param int $uid
      * @return int
      */
     private function removeFailedLogins($uid) {
@@ -313,7 +325,7 @@ class AuthModel {
 
     /**
      * Vráti počet chybných prihlásení daného užívateľa.
-     * @param $uid
+     * @param int $uid
      * @return mixed
      */
     private function getFailedLoginsCount($uid) {
@@ -322,7 +334,7 @@ class AuthModel {
 
     /**
      * Vráti dáta o poslednom chybnom prihlásení.
-     * @param $uid
+     * @param int $uid
      * @return mixed
      */
     private function getLastFailedLogin($uid) {
@@ -333,7 +345,7 @@ class AuthModel {
 
     /**
      * Vráti ID užívateľa podľa emailu.
-     * @param $email
+     * @param string $email
      * @return mixed
      */
     private function getUserIdByEmail($email) {
@@ -342,7 +354,7 @@ class AuthModel {
 
     /**
      * Vráti ID užívateľa podľa tokenu.
-     * @param $token
+     * @param string $token
      * @return mixed
      */
     private function getUserIdByToken($token) {
@@ -354,16 +366,16 @@ class AuthModel {
 
     /**
      * Vráti užívateľské dáta podľa ID.
-     * @param $id
+     * @param int $uid
      * @return mixed
      */
-    private function getUserDataById($id) {
-        return $this->db->queryRow("SELECT * FROM users WHERE id = :id", array("id" => $id));
+    private function getUserDataById($uid) {
+        return $this->db->queryRow("SELECT * FROM users WHERE id = :uid", array("uid" => $uid));
     }
 
     /**
      * Vráti užívateľské dáta podľa emailu.
-     * @param $email
+     * @param string $email
      * @return mixed
      */
     private function getUserDataByEmail($email) {
@@ -372,7 +384,7 @@ class AuthModel {
 
     /**
      * Vráti užívateľské dáta podľa tokenu.
-     * @param $token
+     * @param string $token
      * @return mixed
      */
     private function getUserDataByToken($token) {
@@ -422,11 +434,11 @@ class AuthModel {
 
     /**
      * Aktivuje danému užívateľovi účet a vymaže hash aktivačného kľúča (už ho nebude potrebovať).
-     * @param $id
+     * @param int $uid
      * @return int
      */
-    private function setUserActived($id) {
-        return $this->db->query("UPDATE users SET is_actived = TRUE, activation_key_hash = '' WHERE id = :id", array("id" => $id));
+    private function setUserActived($uid) {
+        return $this->db->query("UPDATE users SET is_actived = TRUE, activation_key_hash = '' WHERE id = :uid", array("uid" => $uid));
     }
 
     // ------------------------------------------------------------------------
@@ -498,7 +510,8 @@ class AuthModel {
             $dt2 = new DateTime("-30 seconds");
 
             if ($failed_logins_count > 3 && $dt1 > $dt2) {
-                throw new Exception("Musíte počkať 30 sekúnd.");
+                $seconds = $dt1->format("s") - $dt2->format("s");
+                throw new Exception("Musíte počkať ${seconds} sekúnd.");
             }
         }
 
@@ -579,8 +592,9 @@ class AuthModel {
 
             $mailer = new SuperMail();
             $mailer->setFrom("email@localhost")->setFromName("Localhost")->setTo($email)->setSubject("Aktivačný kľúč")->setContent($message)->send();
-        } catch (Exception $e){
-            throw new Exception("Počas posielania emailu s aktivačným kľúčom nastala neočakávaná chyba.", 0, $e);
+        } catch (Exception $e) {
+            // todo: zakomentované schválne, na localhoste mi nejde posielať mail!
+            // throw new Exception("Počas posielania emailu s aktivačným kľúčom nastala neočakávaná chyba.", 0, $e);
         }
 
         // todo: toto by tu samozrejme nemalo byť, ale nechávam z dôvodu skúšania apky na localhoste ;)
@@ -596,6 +610,8 @@ class AuthModel {
     public function useActivationKey($email, $key) {
 
         $this->validateEmail($email);
+
+        $this->validateKey($key);
 
         $user = $this->getUserDataByEmail($email);
 
@@ -654,8 +670,9 @@ class AuthModel {
 
             $mailer = new SuperMail();
             $mailer->setFrom("email@localhost")->setFromName("Localhost")->setTo($email)->setSubject("Obnovovací kľúč")->setContent($message)->send();
-        } catch (Exception $e){
-            throw new Exception("Počas posielania emailu s obnovovacím kľúčom nastala neočakávaná chyba.", 0, $e);
+        } catch (Exception $e) {
+            // todo: zakomentované schválne, na localhoste mi nejde posielať mail!
+            // throw new Exception("Počas posielania emailu s obnovovacím kľúčom nastala neočakávaná chyba.", 0, $e);
         }
 
         // todo: toto by tu samozrejme nemalo byť, ale nechávam z dôvodu skúšania apky na localhoste ;)
@@ -673,6 +690,10 @@ class AuthModel {
     public function useRecoveryKey($email, $key, $password, $password_again) {
 
         $this->validateEmail($email);
+
+        $this->validateKey($key);
+
+        $this->validatePassword($password, $password_again);
 
         $user = $this->getUserDataByEmail($email);
 
@@ -698,8 +719,6 @@ class AuthModel {
         if ($last_recovery_key->key_hash != $this->getKeyHash($key) || $dt1 < $dt2) {
             throw new Exception("Zadaný obnovovací kľúč je neplatný.");
         }
-
-        $this->validatePassword($password, $password_again);
 
         $password_salt = $this->generateSalt();
         $password_hash = $this->getPasswordHash($password, $password_salt);
@@ -746,12 +765,38 @@ class AuthModel {
         $this->validatePassword($password_old);
         $this->validatePassword($password_new, $password_new_again);
 
-        // todo: update password
+        $user = $this->getUserDataByToken($this->getLoginToken());
+
+        if (empty($user) || !isset($user->id)) {
+            throw new Exception("Chyťte ho! Niktoša jedneho!");
+        }
+
+        $password_old_hash = $this->getPasswordHash($password_old, $user->password_salt);
+
+        if ($password_old_hash != $user->password_hash) {
+            throw new Exception("Zadané staré heslo nie je správne.");
+        }
+
+        $password_new_salt = $this->generateSalt();
+        $password_new_hash = $this->getPasswordHash($password_new, $password_new_salt);
+
+        $param = array(
+            "id"            => $user->id,
+            "password_salt" => $password_new_salt,
+            "password_hash" => $password_new_hash
+        );
+
+        try {
+            $this->db->query("UPDATE users SET password_salt = :password_salt, password_hash = :password_hash WHERE id = :id", $param);
+        } catch (Exception $e) {
+            throw new Exception("Počas zmeny hesla nastala neočakávaná chyba.", 0, $e);
+        }
     }
 
     /**
      * Vráti dáta o užívateľovi, buď o prihlásenom alebo podľa ID.
-     * Todo: toto by som dal niekam inam, do triedy ktorá sa stará o detaily a tak. Podľa mňa to sem nepatrí.
+     * Toto by som dal niekam inam, do triedy ktorá sa stará o detaily užívateľov a tak.
+     * Podľa mňa to sem nepatrí pretože táto trieda by sa mala starať výhradne o autentifikáciu užívateľa :)
      * @param null|int $uid
      * @return mixed
      */

@@ -14,7 +14,7 @@ if (is_post_request()) {
         $password_new_again = isset($_POST["password_new_again"]) ? $_POST["password_new_again"] : "";
 
         try {
-            $am->updateEmail($email);
+            $am->updatePassword($password_old, $password_new, $password_new_again);
             add_message("Heslo bolo úspešne zmenené.");
             redirect("moj-ucet");
         } catch (Exception $e) {
@@ -83,7 +83,7 @@ add_layout("header", array("title" => "Môj účet"));
 
         <div class="row">
             <div class="col-lg-12">
-                <div class="panel panel-primary">
+                <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title">Zmena emailu</h3>
                     </div>
@@ -108,7 +108,7 @@ add_layout("header", array("title" => "Môj účet"));
 
         <div class="row">
             <div class="col-lg-12">
-                <div class="panel panel-primary">
+                <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title">Zmena hesla</h3>
                     </div>
