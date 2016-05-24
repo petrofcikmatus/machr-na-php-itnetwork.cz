@@ -22,8 +22,8 @@ CREATE TABLE users (
 /* Tabuľka aktívnych prihlásení. */
 CREATE TABLE active_logins (
   active_login_id         SERIAL           PRIMARY KEY,
-  active_login_user_id    INTEGER UNSIGNED NOT NULL REFERENCES users(user_id),
-  active_login_token      VARCHAR(128)     NOT NULL UNIQUE,
+  active_login_user_id    BIGINT UNSIGNED  NOT NULL REFERENCES users(user_id),
+  active_login_token_hash VARCHAR(128)     NOT NULL UNIQUE,
   active_login_created_at TIMESTAMP        NOT NULL DEFAULT now()
   -- todo: pridať napríklad údaje o prehliadači, posledná IP a podobne
 );
@@ -31,7 +31,7 @@ CREATE TABLE active_logins (
 /* Tabuľka chybných prihlásení. Cieľom je hlavne zabrániť silovému útoku na hádanie hesiel. */
 CREATE TABLE failed_logins (
   failed_login_id         SERIAL           PRIMARY KEY,
-  failed_login_user_id    INTEGER UNSIGNED NOT NULL REFERENCES users(user_id),
+  failed_login_user_id    BIGINT UNSIGNED  NOT NULL REFERENCES users(user_id),
   failed_login_created_at TIMESTAMP        NOT NULL DEFAULT now()
   -- todo: tabuľka sa pri úspešnom prihlásení vymaže, ale do budúcna sa môže použiť aj inak
 );

@@ -28,8 +28,9 @@ $db_credentials = array(
 // predanie nastavenia databázy do databázového wrapperu, ľahšie sa nám bude pracovať.
 Database::setCredentials($db_credentials);
 
-// pridanie súkromného kľúča pre túto aplikáciu. Každá apka by mala mať iný :)
-AuthModel::setPrivateKey("hlkôajsdkf3215dfa&#asdf");
+// pridanie tajnej soli pre heslo a pre token. Každá apka by mala mať iný, zvýši sa bezpečnosť :)
+AuthModel::setSecretPasswordSalt("hlkôajsdkf3215dfa&#asdf");
+AuthModel::setSecretTokenSalt("lôaksdjfôlkajsdlfôkasdf");
 
 // routy našej aplikácie a ich zodpovedajúci php súbor
 $routes = array(
