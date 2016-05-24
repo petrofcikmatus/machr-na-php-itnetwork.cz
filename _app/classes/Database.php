@@ -103,7 +103,7 @@ class Database {
     public function queryRow($query, array $parameters = array()) {
         $return = $this->connection->prepare($query);
         $return->execute($parameters);
-        return $return->fetch(PDO::FETCH_ASSOC);
+        return $return->fetch(PDO::FETCH_OBJ);
     }
 
     /**
@@ -114,7 +114,7 @@ class Database {
     public function queryAll($query, array $parameters = array()) {
         $return = $this->connection->prepare($query);
         $return->execute($parameters);
-        return $return->fetchAll(PDO::FETCH_ASSOC);
+        return $return->fetchAll(PDO::FETCH_OBJ);
     }
 
     /**

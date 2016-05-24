@@ -41,22 +41,20 @@ class AuthModel {
             throw new Exception("Prihlasovacie heslo má nesprávny tvar.");
         }
 
-        $query = "SELECT user_id, user_is_actived, user_password_salt, user_password_hash FROM users WHERE user_email = :email";
+        $user = $this->db->queryRow("SELECT user_id, user_is_actived, user_password_salt, user_password_hash FROM users WHERE user_email = :email", array("email" => $email));
 
-        $user = $this->db->queryRow($query, array("email" => $email));
-
-        if (empty($user) || !isset($user["user_id"])) {
+        if (empty($user) || !isset($user->user_id)) {
             throw new Exception("Účet neexistuje.");
         }
 
-        if (false == $user["user_is_actived"]) {
+        if (false == $user->user_is_actived) {
             throw new Exception("Učet nebol aktivovaný.");
         }
 
-        $failed_logins_count = $this->getFailedLoginsCount($user["user_id"]);
+        $failed_logins_count = $this->getFailedLoginsCount($user->user_id);
 
         if (0 != $failed_logins_count) {
-            $dt1 = new DateTime($this->getLastFailedLoginTimestamp($user["user_id"]));
+            $dt1 = new DateTime($this->getLastFailedLoginTimestamp($user->user_id));
             $dt2 = new DateTime("-30 seconds");
 
             if ($failed_logins_count > 3 && $dt1 > $dt2) {
@@ -64,49 +62,42 @@ class AuthModel {
             }
         }
 
-        $password_hash = $user["user_password_hash"];
-        $password_salt = $user["user_password_salt"];
+        $password_hash = $user->user_password_hash;
+        $password_salt = $user->user_password_salt;
 
         if ($password_hash != $this->getPasswordHash($password, $password_salt)) {
-            $this->addFailedLogin($user["user_id"]);
+            $this->addFailedLogin($user->user_id);
             throw new Exception("Nesprávne heslo.");
         }
 
+        $this->clearFailedLogins($user->user_id);
         $token = $this->generateLoginToken();
-        $this->addActiveLogin($user["user_id"], $token);
+        $this->addActiveLogin($user->user_id, $token);
         $this->setLoginToken($token);
     }
 
-    private function addFailedLogin($user_id){
+    private function addFailedLogin($user_id) {
         return $this->db->query("INSERT INTO failed_logins (failed_login_user_id) VALUES (:user_id)", array("user_id" => $user_id));
     }
 
-    private function getFailedLoginsCount($user_id){
+    private function getFailedLoginsCount($user_id) {
         return $this->db->queryOne("SELECT COUNT(*) FROM failed_logins WHERE failed_login_user_id = :id", array("id" => $user_id));
     }
 
-    private function getLastFailedLoginTimestamp($user_id){
+    private function getLastFailedLoginTimestamp($user_id) {
         return $this->db->queryOne("SELECT failed_login_created_at FROM failed_logins WHERE failed_login_user_id = :id ORDER BY failed_login_id DESC LIMIT 1", array("id" => $user_id));
     }
 
-    private function clearFailedLogins($user_id){}
+    private function clearFailedLogins($user_id) {
+        return $this->db->query("DELETE FROM failed_logins WHERE failed_login_user_id = :user_id", array("user_id" => $user_id));
+    }
 
-    private function addActiveLogin($user_id, $token){
+    private function addActiveLogin($user_id, $token) {
         return $this->db->query("INSERT INTO active_logins (active_login_user_id, active_login_token) VALUES (:user_id, :token)", array("user_id" => $user_id, "token" => $token));
     }
 
     public function doLogout() {
-        $query = "DELETE FROM active_logins WHERE active_login_token = :token LIMIT 1";
-        $param = array(
-            "token" => $this->getLoginToken()
-        );
-
-        try {
-            $this->db->query($query, $param);
-        } catch (Exception $e) {
-
-        }
-
+        $this->db->query("DELETE FROM active_logins WHERE active_login_token = :token LIMIT 1", array("token" => $this->getLoginToken()));
         $this->removeLoginToken();
     }
 
