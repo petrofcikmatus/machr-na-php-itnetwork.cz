@@ -19,7 +19,7 @@
         //---------------------------------------------------------------------
         
         submit: function () {
-            this.removeErrorMessages();
+            this.removeMessages();
             return this.isFormValid();
         },
 
@@ -46,10 +46,10 @@
                 var value = object.val();
 
                 if (!thisFormHandler.isNotEmpty(value)) {
-                    thisFormHandler.addErrorMessage(object, 'Zadaj email.');
+                    thisFormHandler.addMessage(object, 'Zadaj email.');
                     formIsValid = false;
                 } else if (!thisFormHandler.isValidEmail(value)) {
-                    thisFormHandler.addErrorMessage(object, 'Zadaj email v správnom formáte.');
+                    thisFormHandler.addMessage(object, 'Zadaj email v správnom formáte.');
                     formIsValid = false;
                 }
             });
@@ -59,10 +59,10 @@
                 var value = object.val();
 
                 if (!thisFormHandler.isNotEmpty(value)) {
-                    thisFormHandler.addErrorMessage(object, 'Zadaj heslo.');
+                    thisFormHandler.addMessage(object, 'Zadaj heslo.');
                     formIsValid = false;
                 } else if (!thisFormHandler.isValidPassword(value)) {
-                    thisFormHandler.addErrorMessage(object, 'Zadaj heslo s minimálne 6 znakmi.');
+                    thisFormHandler.addMessage(object, 'Zadaj heslo s minimálne 6 znakmi.');
                     formIsValid = false;
                 }
             });
@@ -72,7 +72,7 @@
                 var value = object.val();
 
                 if (!thisFormHandler.isNotEmpty(value)) {
-                    thisFormHandler.addErrorMessage(object, 'Zadaj kľúč.');
+                    thisFormHandler.addMessage(object, 'Zadaj kľúč.');
                     formIsValid = false;
                 }
             });
@@ -80,17 +80,17 @@
             return formIsValid;
         },
 
-        addErrorMessage: function (object, message) {
-            object.after(this.getErrorBlockHTML(message));
-            object.parents('.form-group').addClass('has-warning');
+        addMessage: function (object, message) {
+            object.after(this.getMessageHTML(message));
+            object.parents('.form-group').addClass('has-error');
         },
 
-        removeErrorMessages: function () {
+        removeMessages: function () {
             this.$container.find('.help-block').remove();
-            this.$container.find('.has-warning').removeClass('has-warning');
+            this.$container.find('.form-group').removeClass('has-error');
         },
 
-        getErrorBlockHTML: function (message) {
+        getMessageHTML: function (message) {
             return '<span class="help-block">' + message + '</span>';
         },
 

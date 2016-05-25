@@ -2,7 +2,7 @@
 
 **Link:** http://www.itnetwork.cz/php/diskuzni-forum-php-webtvorba/machr-na-php-registrace-prihlasovani-573df6ca3c869
 
-### Štruktúra databázy
+## Štruktúra databázy
 
 Používam MySQL databázu.
 
