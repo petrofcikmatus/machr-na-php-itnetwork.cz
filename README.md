@@ -2,6 +2,14 @@
 
 **Link:** http://www.itnetwork.cz/php/diskuzni-forum-php-webtvorba/machr-na-php-registrace-prihlasovani-573df6ca3c869
 
+## Návod na inštaláciu
+
+Stači rozbaliť do zložky serveru a v súbore index.php urobiť nasledovné zmeny:
+
+- riadky 21 až 27 - nastaviť údaje pre databázu
+- riadok 7 - zmeniť adresu projektu podľa seba
+- riadky 33 a 34 - nastaviť si vlastné sole pre heslá a tokeny
+
 ## Štruktúra databázy
 
 Používam MySQL databázu.
