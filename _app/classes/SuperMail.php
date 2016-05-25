@@ -41,6 +41,15 @@ class SuperMail {
     }
 
     /**
+     * @param string $subject
+     * @return $this
+     */
+    public function setSubject($subject) {
+        $this->subject = $subject;
+        return $this;
+    }
+
+    /**
      * @param $content
      * @return $this
      */
@@ -53,21 +62,12 @@ class SuperMail {
      * @throws Exception
      */
     public function send() {
-        $header = "From: <{$this->fromName}>{$this->from}\r\n";
+        $header = "From: {$this->fromName} <{$this->from}>\r\n";
         $header .= "MIME-Version: 1.0\r\n";
         $header .= "Content-Type: text/html; charset=\"utf-8\"\r\n";
 
         if (!mb_send_mail($this->to, $this->subject, $this->content, $header)) {
             throw new Exception("Nedá sa mi vyslať mail... :'(");
         }
-    }
-
-    /**
-     * @param string $subject
-     * @return $this
-     */
-    public function setSubject($subject) {
-        $this->subject = $subject;
-        return $this;
     }
 }
