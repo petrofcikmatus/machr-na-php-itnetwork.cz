@@ -5,6 +5,8 @@ $is_logged_in = $am->isLoggedIn();
 <html>
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= isset($title) ? $title : "Title" ?></title>
     <link rel="stylesheet" href="<?= url("assets/css/bootstrap.min.css") ?>">
 </head>
