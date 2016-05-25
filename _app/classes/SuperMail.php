@@ -7,29 +7,9 @@
  */
 class SuperMail {
 
-    private $from     = "matus@petrofcik.eu";
-    private $fromName = "Matúš Petrofčík";
     private $to       = "";
     private $subject  = "Without subject?";
     private $content  = "Nothing! Ooops :)";
-
-    /**
-     * @param $email
-     * @return $this
-     */
-    public function setFrom($email) {
-        $this->from = $email;
-        return $this;
-    }
-
-    /**
-     * @param $name
-     * @return $this
-     */
-    public function setFromName($name) {
-        $this->fromName = $name;
-        return $this;
-    }
 
     /**
      * @param $email
@@ -54,7 +34,7 @@ class SuperMail {
      * @return $this
      */
     public function setContent($content) {
-        $this->content = $content;
+        $this->content = $message = wordwrap($content, 70, "\r\n");;
         return $this;
     }
 
@@ -62,11 +42,7 @@ class SuperMail {
      * @throws Exception
      */
     public function send() {
-        $header = "From: {$this->fromName} <{$this->from}>\r\n";
-        $header .= "MIME-Version: 1.0\r\n";
-        $header .= "Content-Type: text/html; charset=\"utf-8\"\r\n";
-
-        if (!mb_send_mail($this->to, $this->subject, $this->content, $header)) {
+        if (!mail($this->to, $this->subject, $this->content)) {
             throw new Exception("Nedá sa mi vyslať mail... :'(");
         }
     }

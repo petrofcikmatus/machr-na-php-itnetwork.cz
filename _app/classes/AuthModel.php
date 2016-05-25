@@ -586,15 +586,12 @@ class AuthModel {
         }
 
         try {
-            $message = "<html><body>";
-            $message .= "<br />Váš aktivačný kľúč je: <b>" . $activation_key . "</b>";
-            $message .= "</html></body>";
-
             $mailer = new SuperMail();
-            $mailer->setFrom("email@localhost")->setFromName("Localhost")->setTo($email)->setSubject("Aktivačný kľúč")->setContent($message)->send();
+            $mailer->setTo($email)->setSubject("Aktivačný kľúč")->setContent("Váš aktivačný kľúč je: " . $activation_key)->send();
         } catch (Exception $e) {
             // todo: zakomentované schválne, na localhoste mi nejde posielať mail!
             // throw new Exception("Počas posielania emailu s aktivačným kľúčom nastala neočakávaná chyba.", 0, $e);
+            add_message("Nepodarilo sa poslať mail s aktivačným kľúčom.");
         }
 
         // todo: toto by tu samozrejme nemalo byť, ale nechávam z dôvodu skúšania apky na localhoste ;)
@@ -664,15 +661,12 @@ class AuthModel {
         }
 
         try {
-            $message = "<html><body>";
-            $message .= "<br />Váš obnovovací kľúč je: <b>" . $recovery_key . "</b>";
-            $message .= "</html></body>";
-
             $mailer = new SuperMail();
-            $mailer->setFrom("email@localhost")->setFromName("Localhost")->setTo($email)->setSubject("Obnovovací kľúč")->setContent($message)->send();
+            $mailer->setTo($email)->setSubject("Obnovovací kľúč")->setContent("Váš obnovovací kľúč je: " . $recovery_key)->send();
         } catch (Exception $e) {
             // todo: zakomentované schválne, na localhoste mi nejde posielať mail!
             // throw new Exception("Počas posielania emailu s obnovovacím kľúčom nastala neočakávaná chyba.", 0, $e);
+            add_message("Nepodarilo sa poslať mail s obnovovacím kľúčom.");
         }
 
         // todo: toto by tu samozrejme nemalo byť, ale nechávam z dôvodu skúšania apky na localhoste ;)
