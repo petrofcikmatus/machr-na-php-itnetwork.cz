@@ -37,7 +37,7 @@ $is_logged_in = $am->isLoggedIn();
                             <li><a href="<?= url("zmena-hesla") ?>">Zmena hesla</a></li>
                         </ul>
                     </li>
-                    <li><a href="<?= url("odhlasenie") ?>">Odhlásenie</a></li>
+                    <li><a class="js-for-sure" href="<?= url("odhlasenie") ?>">Odhlásenie</a></li>
                 <?php } else { ?>
                     <li><a href="<?= url("prihlasenie") ?>">Prihlásenie</a></li>
                     <li><a href="<?= url("registracia") ?>">Registrácia</a></li>
