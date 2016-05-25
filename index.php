@@ -42,7 +42,9 @@ $routes = array(
     "aktivacia-uctu"      => "auth/account-activation",
     "obnova-hesla"        => "auth/account-password-recovery-step-1",
     "obnova-hesla-krok-2" => "auth/account-password-recovery-step-2",
-    "moj-ucet"            => "auth/account-details"
+    "detail-uctu"         => "auth/account-details",
+    "zmena-hesla"         => "auth/account-change-password",
+    "zmena-emailu"        => "auth/account-change-email"
 );
 
 // vyberieme si prvý segment našej url adresy

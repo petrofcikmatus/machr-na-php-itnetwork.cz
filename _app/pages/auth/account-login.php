@@ -11,7 +11,7 @@ if (is_post_request()) {
     try {
         $am->doLogin($email, $password);
         add_message("Prihlásenie prebehlo úspešne.");
-        redirect("moj-ucet");
+        redirect();
     } catch (Exception $e) {
         add_message($e->getMessage());
     }

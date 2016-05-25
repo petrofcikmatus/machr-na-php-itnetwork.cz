@@ -509,7 +509,7 @@ class AuthModel {
             $dt1 = new DateTime($last_failed_login->created_at);
             $dt2 = new DateTime("-30 seconds");
 
-            if ($failed_logins_count > 3 && $dt1 > $dt2) {
+            if ($failed_logins_count > 2 && $dt1 > $dt2) {
                 $seconds = $dt1->format("s") - $dt2->format("s");
                 throw new Exception("Musíte počkať ${seconds} sekúnd.");
             }
@@ -802,13 +802,11 @@ class AuthModel {
      */
     public function getUserData($uid = null) {
         if (null == $uid) {
-            $user = $this->getUserDataByToken($this->getLoginToken());
-        } else {
-            $user = $this->getUserDataById($uid);
+            $uid = $this->getUserIdByToken($this->getLoginToken());
         }
-
+        $user = $this->getUserDataById($uid);
+        
         $dt = new DateTime($user->created_at);
-
         $user->created_at = $dt->format("d.m.Y H:i:s");
 
         return $user;
