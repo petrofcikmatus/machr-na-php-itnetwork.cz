@@ -1,18 +1,11 @@
 <?php add_layout("header", array("title" => "Stránka nebola nájdená")) ?>
 
     <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="panel panel-info">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Chyba 404</h3>
-                    </div>
-                    <div class="panel-body">
-                        Stránka nebola nájdená. Pravdepodobne máte preklep v url adrese alebo ste klikli na nefunkčný odkaz.
-                        <a href="<?= url() ?>">Úvodná stránka</a>.
-                    </div>
-                </div>
-            </div>
+        <div class="jumbotron">
+            <h1>A jeje! Chyba 404 :'(</h1>
+            <h2>To čo hľadáš nenájdeš! Takáto stránka totiž zeexistuje.</h2>
+            <p>Pravdepodobne máš preklep v url adrese alebo ste klikli na nefunkčný odkaz.</p>
+            <p><a class="btn btn-primary" href="<?= url() ?>">Úvodná stránka</a></p>
         </div>
     </div>
 
