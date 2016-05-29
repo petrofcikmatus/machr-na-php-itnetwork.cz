@@ -7,6 +7,7 @@
  */
 class SuperMail {
 
+    private $from     = "uid141564@web.websupport.sk"; // u websupportu sa dá posielať len z toho mailu, ktorý máme vytvorený
     private $to       = "";
     private $subject  = "Without subject?";
     private $content  = "Nothing! Ooops :)";
@@ -42,7 +43,12 @@ class SuperMail {
      * @throws Exception
      */
     public function send() {
-        if (!mail($this->to, $this->subject, $this->content)) {
+
+        $header = "From: Machr na PHP <" . $this->from . ">\r\n";
+        $header .= "MIME-Version: 1.0\r\n";
+        $header .= "Content-Type: text/html; charset=\"utf-8\"\r\n";
+        
+        if (!mail($this->to, $this->subject, $this->content, $header)) {
             throw new Exception("Nedá sa mi vyslať mail... :'(");
         }
     }
