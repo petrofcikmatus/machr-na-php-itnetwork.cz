@@ -41,7 +41,6 @@ class AuthModel {
      * Nastavuje tajnú soľ pre token.
      * Každá aplikácia si môže nastaviť inú, a ukradnuté tokeny
      * aktívnych prihlásení v databázi sa nebudú dať zneužiť.
-     * todo: what?!
      * @param string $string
      * @throws Exception
      */
@@ -89,7 +88,7 @@ class AuthModel {
 
         // ak email nie je zadaný
         if ("" == $email) {
-            throw new Exception("Nezadali ste email.");
+            throw new Exception("Nezadal si email.");
         }
 
         // ak to nie je email
@@ -113,7 +112,7 @@ class AuthModel {
 
         // ak nie je heslo zadané
         if ("" == $password) {
-            throw new Exception("Nezadali ste heslo.");
+            throw new Exception("Nezadal si heslo.");
         }
 
         // ak je heslo príliš krátke
@@ -126,7 +125,7 @@ class AuthModel {
 
             // ak je kontrolné heslo prázdne
             if ("" == $password_again) {
-                throw new Exception("Nezadali ste kontrolné heslo.");
+                throw new Exception("Nezadal si kontrolné heslo.");
             }
 
             // ak sa heslá nezhodujú
@@ -144,7 +143,7 @@ class AuthModel {
     private function validateKey($key) {
         // ak kľúč nie je zadaný
         if ("" == $key) {
-            throw new Exception("Nezadali ste kľúč.");
+            throw new Exception("Nezadal si kľúč.");
         }
     }
 
@@ -511,7 +510,7 @@ class AuthModel {
 
             if ($failed_logins_count > 2 && $dt1 > $dt2) {
                 $seconds = $dt1->format("s") - $dt2->format("s");
-                throw new Exception("Musíte počkať ${seconds} sekúnd.");
+                throw new Exception("Musíš počkať ${seconds} sekúnd.");
             }
         }
 
@@ -649,7 +648,7 @@ class AuthModel {
         }
 
         if (!$user->is_actived) {
-            throw new Exception("Účet ešte nie je aktivovaný, nemôžete mu meniť heslo.");
+            throw new Exception("Účet ešte nie je aktivovaný, nemôžeš mu meniť heslo.");
         }
 
         $recovery_key = $this->generateKey();
