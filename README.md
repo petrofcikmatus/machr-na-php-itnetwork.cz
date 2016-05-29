@@ -12,7 +12,9 @@ Stači rozbaliť do zložky serveru a v súbore index.php urobiť nasledovné zm
 
 ## Štruktúra databázy
 
-Používam MySQL databázu.
+- Typ servera: MariaDB
+- Verzia serveru: 10.0.23-MariaDB - MariaDB Server
+- Verzia protokolu: 10
 
 ```sql
 /* Tabuľka užívateľov. Do tejto tabuľky by som nedával veci ako meno, priezvisko, ... na to by slúžila tabuľka users_meta */
