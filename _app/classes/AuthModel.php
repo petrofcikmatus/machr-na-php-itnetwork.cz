@@ -19,6 +19,29 @@ class AuthModel {
     private $db;
 
     // ------------------------------------------------------------------------
+    // Constructor.
+    // ------------------------------------------------------------------------
+
+    /**
+     * AuthModel konštruktor.
+     * Môj databázový wrapper môžeme pridať pomocou DI alebo sa pridá staticky sám.
+     * @param Database $database
+     * @throws Exception
+     */
+    public function __construct(Database $database = null) {
+        if (null == $database) {
+            try {
+                $this->db = Database::getInstance();
+            } catch (Exception $e) {
+                throw new Exception("Nastal problém s databázou.", 0, $e);
+            }
+        } else {
+            $this->db = $database;
+        }
+        self::$classLock = true;
+    }
+
+    // ------------------------------------------------------------------------
     // Public static methods.
     // ------------------------------------------------------------------------
 
@@ -443,25 +466,6 @@ class AuthModel {
     // ------------------------------------------------------------------------
     // Public methods.
     // ------------------------------------------------------------------------
-
-    /**
-     * AuthModel konštruktor.
-     * Môj databázový wrapper môžeme pridať pomocou DI alebo sa pridá staticky sám.
-     * @param Database $database
-     * @throws Exception
-     */
-    public function __construct(Database $database = null) {
-        if (null == $database) {
-            try {
-                $this->db = Database::getInstance();
-            } catch (Exception $e) {
-                throw new Exception("Nastal problém s databázou.", 0, $e);
-            }
-        } else {
-            $this->db = $database;
-        }
-        self::$classLock = true;
-    }
 
     /**
      * Vráti true, ak je užívateľ prihlásený, inak false.
